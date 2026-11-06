@@ -4,20 +4,26 @@ import numpy as np
 
 from src import ModeloBoostLinear
 from src.benchmarks import PARAMETROS_NOMINAIS, TENSAO_SAIDA_ALVO
+from src.modelos import ParametrosBoost
 
 
-def gerar_matrizes() -> dict[str, np.ndarray]:
-    """Monta as matrizes no ponto de operação nominal do benchmark.
+def gerar_matrizes(
+    parametros: ParametrosBoost = PARAMETROS_NOMINAIS,
+    tensao_saida_media: float = TENSAO_SAIDA_ALVO,
+    corrente_indutor_media: float | None = None,
+) -> dict[str, np.ndarray]:
+    """Monta as matrizes no ponto de operação informado ou no benchmark.
 
     O vetor combinado de entrada é ``u = [delta_D, delta_Vin]`` e a saída é
     ``delta_v_o``. Logo, a matriz de transmissão direta combinada tem duas
     colunas; separadamente, cada entrada tem ``D = [[0]]``.
     """
-    p = PARAMETROS_NOMINAIS
-    corrente_media = TENSAO_SAIDA_ALVO / (
-        p.resistencia_carga * (1.0 - p.duty_cycle)
-    )
-    modelo = ModeloBoostLinear(corrente_media, TENSAO_SAIDA_ALVO)
+    p = parametros
+    if corrente_indutor_media is None:
+        corrente_indutor_media = (
+            tensao_saida_media / p.resistencia_carga + p.corrente_carga_externa
+        ) / (1.0 - p.duty_cycle)
+    modelo = ModeloBoostLinear(corrente_indutor_media, tensao_saida_media)
     a, b_d, b_v = modelo.matrizes(p)
     c = np.array([[0.0, 1.0]])
     d_d = np.zeros((1, 1))

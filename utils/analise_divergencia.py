@@ -16,6 +16,7 @@ from numpy.typing import NDArray
 
 from src import ModeloBoostLinear, ModeloBoostMedio, simular
 from src.benchmarks import PARAMETROS_NOMINAIS, TENSAO_SAIDA_ALVO
+from src.modelos import ParametrosBoost
 from utils.estilo_graficos import configurar_estilo_ieee
 
 
@@ -49,6 +50,8 @@ def analisar_faixa_duty(
     duties: NDArray[np.float64],
     duracao: float = 30e-3,
     frequencia_amostragem: float = 1e6,
+    parametros_nominais: ParametrosBoost = PARAMETROS_NOMINAIS,
+    tensao_saida_alvo: float = TENSAO_SAIDA_ALVO,
 ) -> list[dict[str, float]]:
     """Simula as duas respostas para cada duty e calcula as métricas.
 
@@ -56,16 +59,16 @@ def analisar_faixa_duty(
     ``delta_D = D - D_nominal``, começa com desvios nulos e tem o ponto nominal
     somado às respostas para retornar às grandezas absolutas.
     """
-    p0 = PARAMETROS_NOMINAIS
+    p0 = parametros_nominais
     if np.any((duties <= 0.0) | (duties >= 1.0)):
         raise ValueError("Todos os duty cycles do range precisam estar entre 0 e 1.")
     if duracao <= 0.0 or frequencia_amostragem <= 0.0:
         raise ValueError("A duração e a frequência de amostragem precisam ser positivas.")
 
-    corrente_media = TENSAO_SAIDA_ALVO / (
-        p0.resistencia_carga * (1.0 - p0.duty_cycle)
-    )
-    ponto_operacao = np.array([corrente_media, TENSAO_SAIDA_ALVO])
+    corrente_media = (
+        tensao_saida_alvo / p0.resistencia_carga + p0.corrente_carga_externa
+    ) / (1.0 - p0.duty_cycle)
+    ponto_operacao = np.array([corrente_media, tensao_saida_alvo])
     tempos = np.linspace(
         0.0, duracao, int(duracao * frequencia_amostragem) + 1
     )
@@ -79,7 +82,7 @@ def analisar_faixa_duty(
         resposta_linear = simular(
             ModeloBoostLinear(
                 corrente_media,
-                TENSAO_SAIDA_ALVO,
+                tensao_saida_alvo,
                 duty_perturbacao=float(duty - p0.duty_cycle),
             ),
             tempos,

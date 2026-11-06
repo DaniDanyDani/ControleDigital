@@ -10,16 +10,32 @@ os estados representam desvios em relação ao ponto de operação.
   chaveado, além da linearização de pequenos sinais.
 - `src/simulacao.py`: integração numérica e retorno dos estados para cada
   instante solicitado.
-- `main.py`: configuração de um exemplo, execução dos dois modelos e gráfico
-  comparativo.
+- `src/configuracao.py`: leitura do INI e construção dos parâmetros.
+- `src/pipeline.py`: executa os modelos e análises ativados no INI.
+- `configuracoes/`: configurações de exemplo para as análises atuais.
+- `main.py`: ponto de entrada que recebe o caminho do INI.
 - `tests/`: testes automatizados dos modelos e da simulação.
 
 ## Instalação e execução
 
 ```bash
 python -m pip install -r requirements.txt
-python main.py
+python main.py configuracoes/gerar_analisar_modelo_linear.ini
 ```
+
+O `main.py` carrega um INI e executa apenas os modelos e análises marcados
+como `true`. Os parâmetros, ponto de operação, opções de análise e pasta de
+resultados ficam no arquivo de configuração. Para executar as comparações
+atuais incluindo os modelos médio e chaveado:
+
+```bash
+python main.py configuracoes/gerar_analisar_modelos_atuais.ini
+```
+
+Para adicionar outra configuração, copie um INI de `configuracoes/` e altere
+os parâmetros, modelos e flags em `[analises]`. Os resultados são gravados na
+pasta definida por `pasta_resultados`. Modelos discretos ainda não estão
+incluídos; os INIs atuais habilitam somente recursos existentes.
 
 Para executar todos os testes:
 

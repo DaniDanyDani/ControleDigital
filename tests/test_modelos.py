@@ -6,6 +6,8 @@ from src import ModeloBoostChaveado, ModeloBoostLinear, ModeloBoostMedio, Parame
 from src.benchmarks import PARAMETROS_NOMINAIS, TENSAO_SAIDA_ALVO
 from src.simulacao import simular
 from utils.gerar_matrizes import gerar_matrizes
+from utils.analise_estrutural import verificar_controlabilidade_observabilidade
+from src.configuracao import carregar_configuracao
 
 
 class TestModelosBoost(unittest.TestCase):
@@ -68,6 +70,25 @@ class TestModelosBoost(unittest.TestCase):
         resultado_linear = modelo.derivadas(0.0, delta_x, p)
 
         np.testing.assert_allclose(resultado_matricial, resultado_linear)
+
+    def test_benchmark_e_controlavel_e_observavel(self):
+        matrizes = gerar_matrizes()
+        resultado = verificar_controlabilidade_observabilidade(
+            matrizes["A"], matrizes["B"], matrizes["C"]
+        )
+        self.assertEqual(resultado["posto_Mc"], 2)
+        self.assertEqual(resultado["posto_Mo"], 2)
+        self.assertTrue(resultado["controlavel"])
+        self.assertTrue(resultado["observavel"])
+
+    def test_ini_linear_carrega_parametros_e_flags(self):
+        config = carregar_configuracao(
+            "configuracoes/gerar_analisar_modelo_linear.ini"
+        )
+        self.assertEqual(config.parametros.vin, 12.0)
+        self.assertTrue(config.modelos["linear"])
+        self.assertFalse(config.modelos["chaveado"])
+        self.assertTrue(config.analises["frequencial"])
 
 
 if __name__ == "__main__":

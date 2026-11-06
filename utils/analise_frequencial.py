@@ -9,14 +9,23 @@ from scipy import signal
 
 from src import ModeloBoostLinear
 from src.benchmarks import PARAMETROS_NOMINAIS, TENSAO_SAIDA_ALVO
+from src.modelos import ParametrosBoost
 from utils.estilo_graficos import configurar_estilo_ieee
 
 
-def criar_sys(entrada: str = "duty") -> signal.StateSpace:
-    """Cria o sistema SISO para ``delta_D`` ou ``delta_Vin`` no benchmark."""
-    p = PARAMETROS_NOMINAIS
-    il_media = TENSAO_SAIDA_ALVO / (p.resistencia_carga * (1.0 - p.duty_cycle))
-    modelo = ModeloBoostLinear(il_media, TENSAO_SAIDA_ALVO)
+def criar_sys(
+    entrada: str = "duty",
+    parametros: ParametrosBoost = PARAMETROS_NOMINAIS,
+    tensao_saida_media: float = TENSAO_SAIDA_ALVO,
+    corrente_indutor_media: float | None = None,
+) -> signal.StateSpace:
+    """Cria sistema SISO para ``delta_D`` ou ``delta_Vin`` no ponto informado."""
+    p = parametros
+    if corrente_indutor_media is None:
+        corrente_indutor_media = (
+            tensao_saida_media / p.resistencia_carga + p.corrente_carga_externa
+        ) / (1.0 - p.duty_cycle)
+    modelo = ModeloBoostLinear(corrente_indutor_media, tensao_saida_media)
     a, b_d, b_v = modelo.matrizes(p)
     if entrada == "duty":
         b, d = b_d, np.zeros((1, 1))
