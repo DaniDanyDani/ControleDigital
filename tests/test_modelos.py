@@ -2,7 +2,9 @@ import unittest
 
 import numpy as np
 
-from src import ModeloBoostChaveado, ModeloBoostMedio, ParametrosBoost
+from src import ModeloBoostChaveado, ModeloBoostLinear, ModeloBoostMedio, ParametrosBoost
+from src.benchmarks import PARAMETROS_NOMINAIS, TENSAO_SAIDA_ALVO
+from src.simulacao import simular
 
 
 class TestModelosBoost(unittest.TestCase):
@@ -23,6 +25,23 @@ class TestModelosBoost(unittest.TestCase):
     def test_parametros_invalidos(self):
         with self.assertRaises(ValueError):
             ParametrosBoost(12, 0, 47e-6, 28.8, .125)
+
+    def test_modelo_linear_em_equilibrio(self):
+        # Linear states are deviations, so zero deviation and zero input
+        # perturbations must remain at the operating point.
+        model = ModeloBoostLinear(1.704, 24.0)
+        np.testing.assert_allclose(
+            model.derivadas(0.0, np.zeros(2), self.p), [0.0, 0.0]
+        )
+
+    def test_linear_reproduz_medio_na_partida(self):
+        p = PARAMETROS_NOMINAIS
+        IL = TENSAO_SAIDA_ALVO / (p.resistencia_carga * (1 - p.duty_cycle))
+        X = np.array([IL, TENSAO_SAIDA_ALVO])
+        t = np.linspace(0, 10e-3, 2001)
+        med = simular(ModeloBoostMedio(), t, p, (0.0, 0.0))
+        lin = simular(ModeloBoostLinear(IL, TENSAO_SAIDA_ALVO), t, p, -X) + X
+        np.testing.assert_allclose(lin, med, atol=1e-3)
 
 
 if __name__ == "__main__":

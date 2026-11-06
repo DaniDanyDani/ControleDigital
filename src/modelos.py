@@ -123,6 +123,49 @@ class ModeloBoostMedio(ModeloBoost):
         return np.asarray([di_dt, dv_dt], dtype=float)
 
 
+class ModeloBoostLinear(ModeloBoostMedio):
+    """Modelo de pequenos sinais linearizado em torno de um ponto de operação.
+
+    Os estados são desvios ``[delta_i_L, delta_v_o]``. ``duty_perturbacao``
+    e ``vin_perturbacao`` são entradas incrementais, não valores absolutos.
+    """
+
+    def __init__(
+        self,
+        corrente_indutor_media: float,
+        tensao_saida_media: float,
+        duty_perturbacao: float = 0.0,
+        vin_perturbacao: float = 0.0,
+    ) -> None:
+        self.corrente_indutor_media = corrente_indutor_media
+        self.tensao_saida_media = tensao_saida_media
+        self.duty_perturbacao = duty_perturbacao
+        self.vin_perturbacao = vin_perturbacao
+
+    def derivadas(
+        self,
+        tempo: float,
+        estados: VetorEstados,
+        parametros: ParametrosBoost,
+    ) -> VetorEstados:
+        del tempo
+        delta_i, delta_v = estados
+        p = parametros
+        q = 1.0 - p.duty_cycle
+        di_dt = (
+            -p.resistencia_indutor * delta_i / p.indutancia
+            - q * delta_v / p.indutancia
+            + self.tensao_saida_media * self.duty_perturbacao / p.indutancia
+            + self.vin_perturbacao / p.indutancia
+        )
+        dv_dt = (
+            q * delta_i / p.capacitancia
+            - delta_v / (p.resistencia_carga * p.capacitancia)
+            - self.corrente_indutor_media * self.duty_perturbacao / p.capacitancia
+        )
+        return np.asarray([di_dt, dv_dt], dtype=float)
+
+
 class ModeloBoostChaveado(ModeloBoost):
     """Modelo com PWM ideal e equações distintas nos dois estados da chave."""
 
