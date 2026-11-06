@@ -4,6 +4,7 @@ from .modelos import (
     ModeloBoost,
     ModeloBoostChaveado,
     ModeloBoostLinear,
+    ModeloBoostLinearMatrizes,
     ModeloBoostMedio,
     ParametrosBoost,
 )
@@ -13,6 +14,7 @@ __all__ = [
     "ModeloBoost",
     "ModeloBoostChaveado",
     "ModeloBoostLinear",
+    "ModeloBoostLinearMatrizes",
     "ModeloBoostMedio",
     "ParametrosBoost",
     "simular",

@@ -142,6 +142,31 @@ class ModeloBoostLinear(ModeloBoostMedio):
         self.duty_perturbacao = duty_perturbacao
         self.vin_perturbacao = vin_perturbacao
 
+    def matrizes(self, parametros: ParametrosBoost) -> tuple[NDArray[np.float64], ...]:
+        """Retorna ``A``, ``B_d`` e ``B_v`` do modelo de pequenos sinais.
+
+        Os estados são desvios em torno de ``corrente_indutor_media`` e
+        ``tensao_saida_media``; as entradas são ``delta_D`` e ``delta_Vin``.
+        """
+        p = parametros
+        a = np.array(
+            [
+                [-p.resistencia_indutor / p.indutancia, (p.duty_cycle - 1.0) / p.indutancia],
+                [(1.0 - p.duty_cycle) / p.capacitancia,
+                 -1.0 / (p.resistencia_carga * p.capacitancia)],
+            ],
+            dtype=float,
+        )
+        b_d = np.array(
+            [
+                [self.tensao_saida_media / p.indutancia],
+                [-self.corrente_indutor_media / p.capacitancia],
+            ],
+            dtype=float,
+        )
+        b_v = np.array([[1.0 / p.indutancia], [0.0]], dtype=float)
+        return a, b_d, b_v
+
     def derivadas(
         self,
         tempo: float,
@@ -164,6 +189,24 @@ class ModeloBoostLinear(ModeloBoostMedio):
             - self.corrente_indutor_media * self.duty_perturbacao / p.capacitancia
         )
         return np.asarray([di_dt, dv_dt], dtype=float)
+
+
+class ModeloBoostLinearMatrizes(ModeloBoostLinear):
+    """Modelo linear calculado diretamente por ``A*x + B_d*d + B_v*vin``."""
+
+    def derivadas(
+        self,
+        tempo: float,
+        estados: VetorEstados,
+        parametros: ParametrosBoost,
+    ) -> VetorEstados:
+        del tempo
+        a, b_d, b_v = self.matrizes(parametros)
+        return (
+            a @ estados
+            + b_d[:, 0] * self.duty_perturbacao
+            + b_v[:, 0] * self.vin_perturbacao
+        )
 
 
 class ModeloBoostChaveado(ModeloBoost):

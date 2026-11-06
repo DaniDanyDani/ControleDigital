@@ -5,6 +5,7 @@ import numpy as np
 from src import ModeloBoostChaveado, ModeloBoostLinear, ModeloBoostMedio, ParametrosBoost
 from src.benchmarks import PARAMETROS_NOMINAIS, TENSAO_SAIDA_ALVO
 from src.simulacao import simular
+from utils.gerar_matrizes import gerar_matrizes
 
 
 class TestModelosBoost(unittest.TestCase):
@@ -42,6 +43,31 @@ class TestModelosBoost(unittest.TestCase):
         med = simular(ModeloBoostMedio(), t, p, (0.0, 0.0))
         lin = simular(ModeloBoostLinear(IL, TENSAO_SAIDA_ALVO), t, p, -X) + X
         np.testing.assert_allclose(lin, med, atol=1e-3)
+
+    def test_matrizes_reproduzem_equacao_linear(self):
+        p = PARAMETROS_NOMINAIS
+        corrente_media = TENSAO_SAIDA_ALVO / (
+            p.resistencia_carga * (1.0 - p.duty_cycle)
+        )
+        delta_x = np.array([0.12, -0.35])
+        delta_duty = 0.003
+        delta_vin = -0.2
+        modelo = ModeloBoostLinear(
+            corrente_media,
+            TENSAO_SAIDA_ALVO,
+            duty_perturbacao=delta_duty,
+            vin_perturbacao=delta_vin,
+        )
+        matrizes = gerar_matrizes()
+
+        resultado_matricial = (
+            matrizes["A"] @ delta_x
+            + matrizes["B_d"][:, 0] * delta_duty
+            + matrizes["B_v"][:, 0] * delta_vin
+        )
+        resultado_linear = modelo.derivadas(0.0, delta_x, p)
+
+        np.testing.assert_allclose(resultado_matricial, resultado_linear)
 
 
 if __name__ == "__main__":

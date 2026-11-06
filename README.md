@@ -42,6 +42,15 @@ padrão em `resultados/divergencia_modelo_linear.png`; essa pasta é ignorada
 pelo Git. Use `--saida` para escolher outro caminho; `--duracao` e
 `--fs-amostragem` ajustam a janela e a resolução temporal da simulação.
 
+Para imprimir as matrizes de espaço de estados do modelo linear no benchmark:
+
+```bash
+python -m utils.gerar_matrizes
+```
+
+O script exibe `A`, `B_d` e `B_v` separadamente, além da forma combinada com
+`u = [delta_D, delta_Vin]^T`, `C = [0, 1]` e `D = [0, 0]`.
+
 ## Uso da API
 
 ```python
