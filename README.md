@@ -1,16 +1,18 @@
 # Simulação do conversor boost
 
-Projeto em Python para comparar o modelo médio e o modelo chaveado de um
-conversor boost. Os estados são `x = [i_L, v_o]`.
+Projeto em Python para comparar os modelos médio, chaveado e linear de um
+conversor boost. Os estados absolutos são `x = [i_L, v_o]`; no modelo linear,
+os estados representam desvios em relação ao ponto de operação.
 
 ## Estrutura
 
 - `src/modelos.py`: parâmetros da planta e equações dos modelos médio e
-  chaveado.
+  chaveado, além da linearização de pequenos sinais.
 - `src/simulacao.py`: integração numérica e retorno dos estados para cada
   instante solicitado.
 - `main.py`: configuração de um exemplo, execução dos dois modelos e gráfico
   comparativo.
+- `tests/`: testes automatizados dos modelos e da simulação.
 
 ## Instalação e execução
 
@@ -18,6 +20,27 @@ conversor boost. Os estados são `x = [i_L, v_o]`.
 python -m pip install -r requirements.txt
 python main.py
 ```
+
+Para executar todos os testes:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+## Divergência do modelo linearizado
+
+O script abaixo varre duty cycles ao redor do ponto de linearização nominal,
+compara as trajetórias do modelo médio e do modelo linear, informa os valores
+finais e o tempo de acomodação, e salva um gráfico de NRMSE e erro final:
+
+```bash
+python -m utils.analise_divergencia --duty-min 0.45 --duty-max 0.56 --pontos 12
+```
+
+O ponto de linearização permanece fixo no benchmark. O gráfico é salvo por
+padrão em `resultados/divergencia_modelo_linear.png`; essa pasta é ignorada
+pelo Git. Use `--saida` para escolher outro caminho; `--duracao` e
+`--fs-amostragem` ajustam a janela e a resolução temporal da simulação.
 
 ## Uso da API
 
