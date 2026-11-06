@@ -51,6 +51,21 @@ python -m utils.gerar_matrizes
 O script exibe `A`, `B_d` e `B_v` separadamente, além da forma combinada com
 `u = [delta_D, delta_Vin]^T`, `C = [0, 1]` e `D = [0, 0]`.
 
+Para analisar polos, zeros e o diagrama de Bode do canal de duty (padrão) ou
+do canal de tensão de entrada, incluindo margens de ganho/fase e lugar das
+raízes com realimentação unitária:
+
+```bash
+python -m utils.analise_frequencial --entrada duty
+python -m utils.analise_frequencial --entrada vin
+```
+
+Para verificar a controlabilidade e a observabilidade das matrizes combinadas:
+
+```bash
+python -m utils.analise_estrutural
+```
+
 ## Uso da API
 
 ```python
